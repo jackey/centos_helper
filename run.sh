@@ -120,7 +120,28 @@ setup_vpn_client() {
 # 安装PHP 5.4 / MySQL 5.5 / Apache 2.4
 
 install_lamp() {
-	echo "LAMP"
+	action "安装MySQL..." show_success
+	yum info mysql 1>/dev/null 2>&1
+	if [[ $? = 0 ]]; then
+		yum update --enablerepo=remi mysql -y  
+	else
+		yum install --enablerepo=remi mysql -y
+	fi
+	action "安装Apache" show_success
+
+	yum info httpd 1>/dev/null 2>&1
+
+	if [[ $? = 0 ]]; then
+		yum update --enablerepo=remi httpd -y
+	else
+		yum install --enablerepo=remi httpd -y
+	fi
+
+	action "安装PHP 5.4"
+
+	# 先检查PHP版本是否大于php5.3
+	CV=$(php -v | awk 'NR == 1 { print $2 }' | sed 's/\./ * 1000 /' | { read EX ; expr $EX})
+	GV=$(expr 5 + 4 + 0)	
 }
 
 
@@ -139,6 +160,9 @@ case "$1" in
 		install_git
 		;;
 
+	lamp)
+		install_lamp
+		;;
 	*)
 		echo "使用: run.sh [setup | lamp | systool | vpn | ftp | git | update ]"
 		exit 0
