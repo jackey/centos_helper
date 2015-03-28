@@ -42,7 +42,7 @@ setup_new_repo () {
 	action "安装软件库中..." show_success	
 	for REPO in $EPEL $REMI; do
 		action "${REPO}" show_success
-		rpm -Uvh $REPO 1>/dev/null 2>/tmp/Error
+		rpm -Uvh $REPO  2>/tmp/Error
 		if [[ $? -eq 0 ]]; then
 			action "软件库安装成功" show_success
 		else
@@ -54,7 +54,7 @@ setup_new_repo () {
 	done
 
 	action "更新软件包中..."
-	yum update 1>/dev/null 2>/tmp/Error
+	yum update 2>/tmp/Error
 	if [[ $? -eq 0 ]]; then
 		action "更新软件包成功" show_success
 	else
@@ -70,7 +70,7 @@ setup_new_repo () {
 
 setup_vpn_client() {
 	action "安装pptp 客户端" show_success
-	yum install pptp -y 1>/dev/null 2>/tmp/Error
+	yum install pptp -y 2>/tmp/Error
 	ERROR=$(</tmp/Error)
 	if [[ $? -eq 0 ]]; then
 		action "安装失败 错误消息:" show_failed
