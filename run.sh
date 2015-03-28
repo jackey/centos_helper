@@ -66,19 +66,81 @@ setup_new_repo () {
 }
 
 
+# 安装VPN客户端
+
+setup_vpn_client() {
+	action "安装pptp 客户端" show_success
+	yum install pptp -y 1>/dev/null 2>/tmp/Error
+	ERROR=$(</tmp/Error)
+	if [[ $? -eq 0 ]]; then
+		action "安装失败 错误消息:" show_failed
+		echo $ERROR
+	fi
+
+	read -p "`echo -e '请输入VPN服务器地址\n\b'`" SERVER
+	read -p "$(echo -e '请输入VPN帐号\n\b')" ACCOUNT
+	read -p "$(echo -e '请输入VPN密码\n\b')" PASS
+
+	CS="/etc/ppp/chap-secrets"
+	[[ -f $CS ]] || touch $CS
+
+	SERVER_NAME="RUNJSSERVER"
+	
+	printf "\n" >> $CS
+
+	action "写入VPN帐号到配置" show_success
+	printf "%s    %s    %s    *\n" $ACCOUNT $SERVER_NAME $PASS  >> $CS
+	action "写入VPN帐号成功" show_success
+	
+	PP="/etc/ppp/peers"
+	[[ -d $PP ]] || mkdir $PP
+
+	PPNAME="vpn.$SERVER_NAME.fumer.me"
+	PPF="${PP}/$PPNAME"	
+
+	action "写入VPN客户端配置"
+	printf "pty \"pptp $s --nolaunchpppd\"\n name %s \n remotename %s \n require-mppe-128 \n file /etc/ppp/options.pptp \n ipparam %s\n" $SERVER $ACCOUNT $SERVER_NAME $PPNAME > $PPF
+	
+	action "开启ppp_mppe 模块" modprobe ppp_mppe 
+
+
+	action "更改/etc/ppp/options.pptp 配置中" show_success
+	action "备份/etc/ppp/options.pptp" cp /etc/ppp/options.pptp /etc/ppp/options.pptp.bk 
+
+	printf "lock \n noauth \n refuse-pap \n refuse-eap \n refuse-chap \n nobsdcomp \n nodeflate \n require-mppe-128" > /etc/ppp/options.pptp	
+	echo "运行 fumervpnd 链接vpn "
+	
+	touch /usr/local/bin/fumervpnd && printf "!#/usr/bin/env bash \n echo '链接VPN中' \n pppd call $PPNAME" > /usr/local/bin/fumervpn && chmod +x /usr/local/bin/fumervpnd	
+
+	action "VPN 客户端安装成功" show_success
+		
+}
+
+
 # 安装PHP 5.4 / MySQL 5.5 / Apache 2.4
 
 install_lamp() {
 	echo "LAMP"
 }
 
+
+install_git () {
+	action "安装GIT" yum install git
+}
+
 case "$1" in 
 	setup)
-		echo "setup"
+		setup_new_repo
+		;;
+	vpn)
+		setup_vpn_client
+		;;
+	git)
+		install_git
 		;;
 
 	*)
-		echo "使用: run.sh [setup | lamp | systool | vpn ]"
+		echo "使用: run.sh [setup | lamp | systool | vpn | ftp | git | update ]"
 		exit 0
 esac
 
