@@ -44,6 +44,15 @@ fi
 
 echo "项目已经创建 $WORKSPACE/$pname"
 
+read -p "是web 应用？y/N
+> " isweb
+
+if [[ $isweb =~ (y|Y) ]]; then
+	
+else
+
+fi
+
 
 
 
